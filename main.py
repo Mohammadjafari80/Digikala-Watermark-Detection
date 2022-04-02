@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 from transformers import train_transforms_simple, train_transforms
 from model import initialize_model
 from train import train_model
+from test import test_model
 import torch.nn as nn
 import torch.optim as optim
 import torch
@@ -31,11 +32,17 @@ print(f'Device is: {device}')
 AUGMENTATION_RATE = 0
 
 train_data_path = os.path.join(current_path, 'dataset', 'train')
+test_data_path = os.path.join(current_path, 'dataset', 'test')
+
 print(f'Train data path is: {train_data_path}')
+print(f'Test data path is: {test_data_path}')
 classes = [0, 1]  # 0 -> Negative | 1 -> Positive
 labels = []
 image_paths = []
 train_image_paths = []
+test_image_paths = []
+file_names = []
+
 
 def show(img):
     np_img = img.numpy()
@@ -46,6 +53,12 @@ def show(img):
 for data_path in glob.glob(train_data_path + '/*'):
     train_image_paths.append(glob.glob(data_path + '/*'))
 
+for data_path in glob.glob(test_data_path + '/*'):
+    test_image_paths.append(glob.glob(data_path)[-1])
+    file_names.append(test_image_paths[-1].split('\\')[-1])
+
+print(len(test_image_paths))
+print(len(file_names))
 for i, class_samples in enumerate(train_image_paths):
     for sample in class_samples:
         labels.append(classes[i])
@@ -107,3 +120,9 @@ criterion = nn.CrossEntropyLoss()
 # Train and evaluate
 model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, device, num_epochs=num_epochs,
                              is_inception=(model_name == "inception"))
+
+test_dataset = WatermarkDataset(test_image_paths, file_names, train_transforms_simple)
+print(len(test_dataset))
+test_set = DataLoader(test_dataset, batch_size=1)
+
+test_model(model_ft, test_set, device)
