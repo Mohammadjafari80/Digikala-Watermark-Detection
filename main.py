@@ -51,19 +51,19 @@ for i, class_samples in enumerate(train_image_paths):
 
 main_dataset = WatermarkDataset(image_paths, labels, train_transforms_simple)
 data_loader = DataLoader(main_dataset, batch_size=batch_size)
-batch = next(iter(data_loader))
-grid = torchvision.utils.make_grid(batch[0], nrow=8, padding=30)
-grid_img = show(grid)
-cv2.imwrite('grid-original.jpg', grid_img)
+# batch = next(iter(data_loader))
+# grid = torchvision.utils.make_grid(batch[0], nrow=8, padding=30)
+# grid_img = show(grid)
+# cv2.imwrite('grid-original.jpg', grid_img)
 
 for i in range(AUGMENTATION_RATE):
     augmented_dataset = WatermarkDataset(image_paths, labels, train_transforms)
     main_dataset = ConcatDataset([main_dataset, augmented_dataset])
-    data_loader = DataLoader(augmented_dataset, batch_size=batch_size)
-    batch = next(iter(data_loader))
-    grid = torchvision.utils.make_grid(batch[0], nrow=8, padding=30)
-    grid_img = show(grid)
-    cv2.imwrite(f'grid-augmented-{i}.jpg', grid_img)
+    data_loader = DataLoader(main_dataset, batch_size=batch_size)
+    # batch = next(iter(data_loader))
+    # grid = torchvision.utils.make_grid(batch[0], nrow=8, padding=30)
+    # grid_img = show(grid)
+    # cv2.imwrite(f'grid-augmented-{i}.jpg', grid_img)
 
 model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
 model_ft.to(device)
@@ -90,4 +90,5 @@ optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
 criterion = nn.CrossEntropyLoss()
 
 # Train and evaluate
-model_ft, hist = train_model(model_ft, data_loader, criterion, optimizer_ft, device, num_epochs=num_epochs, is_inception=(model_name=="inception"))
+model_ft, hist = train_model(model_ft, data_loader, criterion, optimizer_ft, device, num_epochs=num_epochs,
+                             is_inception=(model_name == "inception"))
