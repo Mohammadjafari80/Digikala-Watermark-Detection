@@ -6,8 +6,7 @@ from albumentations.pytorch import ToTensorV2
 import cv2
 import glob
 import numpy as np
-import random
-import torchvision
+import os
 from dataset import WatermarkDataset
 from matplotlib import pyplot as plt
 from transformers import train_transforms_simple, train_transforms
@@ -20,6 +19,7 @@ from sklearn.model_selection import train_test_split
 
 # cv2.setNumThreads(0)
 # cv2.ocl.setUseOpenCL(False)
+current_path = os.getcwd()
 model_name = "resnet"
 num_classes = 2
 batch_size = 64
@@ -27,9 +27,15 @@ num_epochs = 15
 train_val_rate = 0.75
 feature_extract = True
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print(device)
+print(f'Device is: {device}')
 AUGMENTATION_RATE = 1
 
+train_data_path = os.path.join(current_path, 'dataset\\train\\')
+print(f'Train data path is: {train_data_path}')
+classes = [0, 1]  # 0 -> Negative | 1 -> Positive
+labels = []
+image_paths = []
+train_image_paths = []
 
 def show(img):
     np_img = img.numpy()
@@ -37,11 +43,6 @@ def show(img):
     return cv2.cvtColor(np.transpose(np_img, (1, 2, 0)), cv2.COLOR_RGB2BGR)
 
 
-train_data_path = '.\\dataset\\train\\'
-classes = [0, 1]  # 0 -> Negative | 1 -> Positive
-labels = []
-image_paths = []
-train_image_paths = []
 
 for data_path in glob.glob(train_data_path + '\\*'):
     train_image_paths.append(glob.glob(data_path + '\\*'))
