@@ -23,8 +23,8 @@ current_path = os.path.abspath(os.curdir)
 print(current_path, os.curdir)
 model_name = "resnet"
 num_classes = 2
-batch_size = 64
-num_epochs = 15
+batch_size = 128
+num_epochs = 20
 train_val_rate = 0.75
 feature_extract = True
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
