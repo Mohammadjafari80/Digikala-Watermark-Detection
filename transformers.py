@@ -8,6 +8,7 @@ train_transforms = A.Compose(
         A.RGBShift(r_shift_limit=10, g_shift_limit=10, b_shift_limit=10, p=0.7),
         A.MultiplicativeNoise(multiplier=[0.5, 2], per_channel=True, p=0.7),
         A.OpticalDistortion(p=0.9),
+        A.HorizontalFlip(p=0.5),
         A.GaussNoise(p=0.8),
         A.ColorJitter(p=0.7),
         A.RandomToneCurve(p=0.7),
