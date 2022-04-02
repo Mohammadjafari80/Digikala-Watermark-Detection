@@ -19,7 +19,7 @@ from sklearn.model_selection import train_test_split
 
 # cv2.setNumThreads(0)
 # cv2.ocl.setUseOpenCL(False)
-current_path = os.getcwd()
+current_path = os.path.abspath(os.curdir)
 model_name = "resnet"
 num_classes = 2
 batch_size = 64
@@ -30,7 +30,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(f'Device is: {device}')
 AUGMENTATION_RATE = 1
 
-train_data_path = os.path.join(current_path, 'dataset\\train\\')
+train_data_path = os.path.join(current_path, 'dataset/train/')
 print(f'Train data path is: {train_data_path}')
 classes = [0, 1]  # 0 -> Negative | 1 -> Positive
 labels = []
@@ -43,9 +43,8 @@ def show(img):
     return cv2.cvtColor(np.transpose(np_img, (1, 2, 0)), cv2.COLOR_RGB2BGR)
 
 
-
-for data_path in glob.glob(train_data_path + '\\*'):
-    train_image_paths.append(glob.glob(data_path + '\\*'))
+for data_path in glob.glob(train_data_path + '/*'):
+    train_image_paths.append(glob.glob(data_path + '/*'))
 
 for i, class_samples in enumerate(train_image_paths):
     for sample in class_samples:
