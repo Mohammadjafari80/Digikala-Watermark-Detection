@@ -3,7 +3,7 @@ import copy
 import torch
 
 
-def train_model(model, dataloader, criterion, optimizer, device, num_epochs=25, is_inception=False):
+def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25, is_inception=False):
     since = time.time()
 
     val_acc_history = []
@@ -16,7 +16,7 @@ def train_model(model, dataloader, criterion, optimizer, device, num_epochs=25, 
         print('-' * 10)
 
         # Each epoch has a training and validation phase
-        for phase in ['train']:
+        for phase in ['train', 'val']:
             if phase == 'train':
                 model.train()  # Set model to training mode
             else:
@@ -26,7 +26,7 @@ def train_model(model, dataloader, criterion, optimizer, device, num_epochs=25, 
             running_corrects = 0
 
             # Iterate over data.
-            for inputs, labels in dataloader:
+            for inputs, labels in dataloaders[phase]:
                 inputs = inputs.float()
                 inputs = inputs.to(device)
                 labels = labels.to(device)
@@ -49,7 +49,6 @@ def train_model(model, dataloader, criterion, optimizer, device, num_epochs=25, 
                         loss = loss1 + 0.4 * loss2
                     else:
                         outputs = model(inputs)
-
                         loss = criterion(outputs, labels)
 
                     _, preds = torch.max(outputs, 1)
@@ -63,8 +62,8 @@ def train_model(model, dataloader, criterion, optimizer, device, num_epochs=25, 
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
 
-            epoch_loss = running_loss / len(dataloader.dataset)
-            epoch_acc = running_corrects.double() / len(dataloader.dataset)
+            epoch_loss = running_loss / len(dataloaders[phase].dataset)
+            epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 

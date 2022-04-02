@@ -1,5 +1,5 @@
 import cv2
-from torch.utils.data import Dataset, DataLoader, ConcatDataset
+from torch.utils.data import Dataset, DataLoader, ConcatDataset, Subset
 
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -16,6 +16,7 @@ from train import train_model
 import torch.nn as nn
 import torch.optim as optim
 import torch
+from sklearn.model_selection import train_test_split
 
 # cv2.setNumThreads(0)
 # cv2.ocl.setUseOpenCL(False)
@@ -23,10 +24,11 @@ model_name = "resnet"
 num_classes = 2
 batch_size = 64
 num_epochs = 15
+train_val_rate = 0.75
 feature_extract = True
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
-AUGMENTATION_RATE = 3
+AUGMENTATION_RATE = 1
 
 
 def show(img):
@@ -50,7 +52,9 @@ for i, class_samples in enumerate(train_image_paths):
         image_paths.append(sample)
 
 main_dataset = WatermarkDataset(image_paths, labels, train_transforms_simple)
-data_loader = DataLoader(main_dataset, batch_size=batch_size)
+# data_loader = DataLoader(main_dataset, batch_size=batch_size)
+# print(data_loader)
+# print(len(data_loader.dataset))
 # batch = next(iter(data_loader))
 # grid = torchvision.utils.make_grid(batch[0], nrow=8, padding=30)
 # grid_img = show(grid)
@@ -59,12 +63,23 @@ data_loader = DataLoader(main_dataset, batch_size=batch_size)
 for i in range(AUGMENTATION_RATE):
     augmented_dataset = WatermarkDataset(image_paths, labels, train_transforms)
     main_dataset = ConcatDataset([main_dataset, augmented_dataset])
-    data_loader = DataLoader(main_dataset, batch_size=batch_size)
+    # data_loader = DataLoader(main_dataset, batch_size=batch_size, shuffle=True)
     # batch = next(iter(data_loader))
     # grid = torchvision.utils.make_grid(batch[0], nrow=8, padding=30)
     # grid_img = show(grid)
     # cv2.imwrite(f'grid-augmented-{i}.jpg', grid_img)
 
+
+indices = np.random.choice(np.arange(len(main_dataset)), len(main_dataset), replace=False)
+train_indices, val_indices = indices[:int(train_val_rate * len(main_dataset))], indices[int(train_val_rate * len(main_dataset)):]
+train_set, val_set = Subset(main_dataset, train_indices), Subset(main_dataset, val_indices)
+
+print(f'Train dataset length is: {len(train_set)}')
+print(f'Val dataset length is: {len(val_set)}')
+
+dataloaders_dict = {'train': DataLoader(train_set, batch_size=batch_size, shuffle=True),
+                    'val': DataLoader(val_set, batch_size=batch_size, shuffle=True)}
+print(dataloaders_dict)
 model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
 model_ft.to(device)
 print(model_ft)
@@ -90,5 +105,5 @@ optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
 criterion = nn.CrossEntropyLoss()
 
 # Train and evaluate
-model_ft, hist = train_model(model_ft, data_loader, criterion, optimizer_ft, device, num_epochs=num_epochs,
+model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, device, num_epochs=num_epochs,
                              is_inception=(model_name == "inception"))
