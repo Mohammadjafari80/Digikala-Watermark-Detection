@@ -24,11 +24,13 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
 
             running_loss = 0.0
             running_corrects = 0
+            epoch_all = 0
+            epoch_loss = 0
+            epoch_true = 0
 
             # Iterate over data.
-            with tqdm(dataloaders[phase], unit="batch") as tepoch:
-                for inputs, labels in tepoch:
-                    tepoch.set_description(f"Epoch {epoch}")
+            with tqdm(enumerate(dataloaders[phase]), unit="batch", total=len(dataloaders[phase])) as tepoch:
+                for i, (inputs, labels) in tepoch:
                     inputs = inputs.float()
                     inputs = inputs.to(device)
                     labels = labels.to(device)
@@ -38,6 +40,7 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
 
                     # forward
                     # track history if only in train
+                    outputs = None
                     with torch.set_grad_enabled(phase == 'train'):
                         # Get model outputs and calculate loss
                         # Special case for inception because in training it has an auxiliary output. In train
@@ -52,6 +55,7 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
                         else:
                             outputs = model(inputs)
                             loss = criterion(outputs, labels)
+                            predictions = outputs.argmax(-1)
 
                         _, preds = torch.max(outputs, 1)
 
@@ -61,14 +65,16 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
                             optimizer.step()
 
                     # statistics
+                    epoch_loss += float(loss)
+                    epoch_all += len(outputs)
                     running_loss += loss.item() * inputs.size(0)
                     running_corrects += torch.sum(preds == labels.data)
+                    tepoch.set_description(f'{phase} - Loss: {epoch_loss / (i + 1):.3e} - Acc: {running_corrects * 100. / epoch_all:.2f}%')
 
                 epoch_loss = running_loss / len(dataloaders[phase].dataset)
                 epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
-                tepoch.set_postfix(loss=epoch_loss, accuracy=100. * epoch_acc)
-                print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
+                print('\n{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
 
                 # deep copy the model
                 if phase == 'val' and epoch_acc > best_acc:

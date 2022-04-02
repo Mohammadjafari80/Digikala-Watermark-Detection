@@ -20,16 +20,15 @@ from sklearn.model_selection import train_test_split
 # cv2.setNumThreads(0)
 # cv2.ocl.setUseOpenCL(False)
 current_path = os.path.abspath(os.curdir)
-print(current_path, os.curdir)
 model_name = "resnet"
 num_classes = 2
-batch_size = 128
-num_epochs = 20
+batch_size = 256
+num_epochs = 10
 train_val_rate = 0.75
 feature_extract = True
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'Device is: {device}')
-AUGMENTATION_RATE = 1
+AUGMENTATION_RATE = 0
 
 train_data_path = os.path.join(current_path, 'dataset', 'train')
 print(f'Train data path is: {train_data_path}')
@@ -82,7 +81,7 @@ dataloaders_dict = {'train': DataLoader(train_set, batch_size=batch_size, shuffl
                     'val': DataLoader(val_set, batch_size=batch_size, shuffle=True)}
 print(dataloaders_dict)
 model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
-model_ft.to(device)
+model_ft = model_ft.to(device)
 print(model_ft)
 
 params_to_update = model_ft.parameters()
