@@ -91,4 +91,5 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
 
     # load best model weights
     model.load_state_dict(best_model_wts)
+    torch.save(best_model_wts, 'model_weights.pth')
     return model, val_acc_history

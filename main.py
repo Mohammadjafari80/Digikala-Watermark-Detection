@@ -23,9 +23,9 @@ from sklearn.model_selection import train_test_split
 current_path = os.path.abspath(os.curdir)
 model_name = "resnet"
 num_classes = 2
-batch_size = 256
-num_epochs = 10
-train_val_rate = 0.75
+batch_size = 512
+num_epochs = 20
+train_val_rate = 0.8
 feature_extract = True
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'Device is: {device}')
