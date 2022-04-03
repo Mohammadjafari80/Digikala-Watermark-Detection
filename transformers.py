@@ -4,7 +4,7 @@ from albumentations.pytorch import ToTensorV2
 
 train_transforms = A.Compose(
     [
-        A.Resize(width=224, height=224),
+        # A.Resize(width=224, height=224),
         A.RGBShift(r_shift_limit=10, g_shift_limit=10, b_shift_limit=10, p=0.7),
         A.MultiplicativeNoise(multiplier=[0.5, 2], per_channel=True, p=0.7),
         A.OpticalDistortion(p=0.9),
@@ -22,7 +22,7 @@ train_transforms = A.Compose(
 
 train_transforms_simple = A.Compose(
     [
-        A.Resize(width=224, height=224),
+        # A.Resize(width=224, height=224),
         ToTensorV2(),
     ]
 )

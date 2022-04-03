@@ -10,7 +10,7 @@ import os
 from dataset import WatermarkDataset
 from matplotlib import pyplot as plt
 from transformers import train_transforms_simple, train_transforms
-from model import initialize_model
+from model import initialize_model, Net
 from train import train_model
 from test import test_model
 import torch.nn as nn
@@ -23,7 +23,7 @@ from sklearn.model_selection import train_test_split
 current_path = os.path.abspath(os.curdir)
 model_name = "resnet"
 num_classes = 2
-batch_size = 512
+batch_size = 32
 num_epochs = 20
 train_val_rate = 0.8
 feature_extract = True
@@ -93,9 +93,10 @@ print(f'Val dataset length is: {len(val_set)}')
 dataloaders_dict = {'train': DataLoader(train_set, batch_size=batch_size, shuffle=True),
                     'val': DataLoader(val_set, batch_size=batch_size, shuffle=True)}
 print(dataloaders_dict)
-model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
+# model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
+model_ft = Net()
 model_ft = model_ft.to(device)
-print(model_ft)
+# print(model_ft)
 
 params_to_update = model_ft.parameters()
 
@@ -112,15 +113,19 @@ else:
             print("\t", name)
 
 # Observe that all parameters are being optimized
-optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
+optimizer_ft = optim.Adam(params_to_update, lr=0.001)
 
 # Setup the loss fxn
-criterion = nn.CrossEntropyLoss()
+criterion = nn.BCELoss()
 
+# model_ft.load_state_dict(torch.load('./model_weights-2.pt'))
 # Train and evaluate
 model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, device, num_epochs=num_epochs,
                              is_inception=(model_name == "inception"))
 
+# model_ft.eval()
+print('$' * 40)
+print(model_ft)
 test_dataset = WatermarkDataset(test_image_paths, file_names, train_transforms_simple)
 print(len(test_dataset))
 test_set = DataLoader(test_dataset, batch_size=1)

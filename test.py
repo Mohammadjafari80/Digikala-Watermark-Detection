@@ -16,8 +16,8 @@ def test_model(model, dataloader, device):
             inputs = inputs.float()
             inputs = inputs.to(device)
             outputs = model(inputs)
-            _, preds = torch.max(outputs, 1)
-            csv_out.append((labels[0], preds[0].item()))
+            preds = torch.round(outputs)
+            csv_out.append((labels[0], int(preds[0].item())))
 
     print(csv_out)
 

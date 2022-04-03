@@ -53,11 +53,10 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
                             loss2 = criterion(aux_outputs, labels)
                             loss = loss1 + 0.4 * loss2
                         else:
-                            outputs = model(inputs)
-                            loss = criterion(outputs, labels)
-                            predictions = outputs.argmax(-1)
+                            outputs = model(inputs).float()
+                            loss = criterion(outputs.float(), labels.unsqueeze(1).float())
 
-                        _, preds = torch.max(outputs, 1)
+                        preds = torch.round(outputs)
 
                         # backward + optimize only if in training phase
                         if phase == 'train':
@@ -68,7 +67,7 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
                     epoch_loss += float(loss)
                     epoch_all += len(outputs)
                     running_loss += loss.item() * inputs.size(0)
-                    running_corrects += torch.sum(preds == labels.data)
+                    running_corrects += torch.count_nonzero(preds == labels.unsqueeze(1))
                     tepoch.set_description(f'{phase} - Loss: {epoch_loss / (i + 1):.3e} - Acc: {running_corrects * 100. / epoch_all:.2f}%')
 
                 epoch_loss = running_loss / len(dataloaders[phase].dataset)
@@ -91,5 +90,5 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
 
     # load best model weights
     model.load_state_dict(best_model_wts)
-    torch.save(best_model_wts, 'model_weights.pth')
+    torch.save(best_model_wts, 'model_weights-2.pt')
     return model, val_acc_history
