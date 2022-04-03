@@ -20,11 +20,12 @@ from sklearn.model_selection import train_test_split
 
 # cv2.setNumThreads(0)
 # cv2.ocl.setUseOpenCL(False)
+
 current_path = os.path.abspath(os.curdir)
 model_name = "resnet"
 num_classes = 2
-batch_size = 32
-num_epochs = 20
+batch_size = 128
+num_epochs = 100
 train_val_rate = 0.8
 feature_extract = True
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -93,8 +94,8 @@ print(f'Val dataset length is: {len(val_set)}')
 dataloaders_dict = {'train': DataLoader(train_set, batch_size=batch_size, shuffle=True),
                     'val': DataLoader(val_set, batch_size=batch_size, shuffle=True)}
 print(dataloaders_dict)
-# model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
-model_ft = Net()
+model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
+# model_ft = Net()
 model_ft = model_ft.to(device)
 # print(model_ft)
 
@@ -118,8 +119,9 @@ optimizer_ft = optim.Adam(params_to_update, lr=0.001)
 # Setup the loss fxn
 criterion = nn.BCELoss()
 
-# model_ft.load_state_dict(torch.load('./model_weights-2.pt'))
+model_ft.load_state_dict(torch.load('./model_weights-2.pt'))
 # Train and evaluate
+
 model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, device, num_epochs=num_epochs,
                              is_inception=(model_name == "inception"))
 
