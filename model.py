@@ -7,37 +7,57 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.f = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.Dropout2d(0.3),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),     # 256 * 256
-
-            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(64),
+            nn.Dropout2d(0.3),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),     # 128 * 128
 
-            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(128),
+            nn.Dropout2d(0.3),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),  # 64 * 64
+            nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(128),
+            nn.Dropout2d(0.3),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),     # 64 * 64
+
+            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
+            nn.Dropout2d(0.3),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),  # 32 * 32
 
             nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),     # 32 * 32
-
-            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(256),
+            nn.Dropout2d(0.3),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),     # 16 * 16
 
-            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(512),
+            nn.Dropout2d(0.3),
             nn.ReLU(),
-            nn.MaxPool2d(2, 2),  # 8 * 8
+            nn.MaxPool2d(2, 2),     # 8 * 8
+
+            nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(512),
+            nn.Dropout2d(0.3),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),  # 2 * 2
 
             nn.Flatten(),
-            nn.Linear(32768, 1024),
+            nn.Linear(2048, 1024),
+            nn.BatchNorm1d(1024),
+            nn.Dropout(0.2),
             nn.ReLU(),
             nn.Linear(1024, 512),
+            nn.BatchNorm1d(512),
+            nn.Dropout(0.2),
             nn.ReLU(),
             nn.Linear(512, 1),
             nn.Sigmoid()

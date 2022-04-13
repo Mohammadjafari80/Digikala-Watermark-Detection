@@ -1,4 +1,5 @@
 import cv2
+import torchvision
 from torch.utils.data import Dataset, DataLoader, ConcatDataset, Subset
 
 import albumentations as A
@@ -9,7 +10,7 @@ import numpy as np
 import os
 from dataset import WatermarkDataset
 from matplotlib import pyplot as plt
-from transformers import train_transforms_simple, train_transforms
+from transformers import *
 from model import initialize_model, Net
 from train import train_model
 from test import test_model
@@ -24,13 +25,13 @@ from sklearn.model_selection import train_test_split
 current_path = os.path.abspath(os.curdir)
 model_name = "resnet"
 num_classes = 2
-batch_size = 128
-num_epochs = 100
+batch_size = 256
+num_epochs = 20
 train_val_rate = 0.8
 feature_extract = True
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f'Device is: {device}')
-AUGMENTATION_RATE = 0
+# AUGMENTATION_RATE = 3
 
 train_data_path = os.path.join(current_path, 'dataset', 'train')
 test_data_path = os.path.join(current_path, 'dataset', 'test')
@@ -66,26 +67,30 @@ for i, class_samples in enumerate(train_image_paths):
         image_paths.append(sample)
 
 main_dataset = WatermarkDataset(image_paths, labels, train_transforms_simple)
-# data_loader = DataLoader(main_dataset, batch_size=batch_size)
-# print(data_loader)
-# print(len(data_loader.dataset))
-# batch = next(iter(data_loader))
-# grid = torchvision.utils.make_grid(batch[0], nrow=8, padding=30)
-# grid_img = show(grid)
-# cv2.imwrite('grid-original.jpg', grid_img)
 
-for i in range(AUGMENTATION_RATE):
-    augmented_dataset = WatermarkDataset(image_paths, labels, train_transforms)
+transforms = [train_flip_vh, train_flip_h, train_flip_v]
+
+for transform in transforms:
+    augmented_dataset = WatermarkDataset(image_paths, labels, transform)
     main_dataset = ConcatDataset([main_dataset, augmented_dataset])
-    # data_loader = DataLoader(main_dataset, batch_size=batch_size, shuffle=True)
-    # batch = next(iter(data_loader))
-    # grid = torchvision.utils.make_grid(batch[0], nrow=8, padding=30)
-    # grid_img = show(grid)
-    # cv2.imwrite(f'grid-augmented-{i}.jpg', grid_img)
+
+transforms = [train_flip_vh, train_flip_h, train_flip_v, train_transforms_simple, train_transforms]
+transforms_names = ['flip-vh', 'flip-h', 'flip-v', 'original', 'mix']
+
+for transform, transforms_name in zip(transforms, transforms_names):
+    augmented_dataset = WatermarkDataset(image_paths, labels, transform)
+    data_loader = DataLoader(augmented_dataset, batch_size=64)
+    batch = next(iter(data_loader))
+    grid = torchvision.utils.make_grid(batch[0], nrow=8, padding=10)
+    grid_img = show(grid)
+    cv2.imwrite(f'grid-augmented-{transforms_name}.jpg', grid_img)
+
+
 
 
 indices = np.random.choice(np.arange(len(main_dataset)), len(main_dataset), replace=False)
-train_indices, val_indices = indices[:int(train_val_rate * len(main_dataset))], indices[int(train_val_rate * len(main_dataset)):]
+train_indices, val_indices = indices[:int(train_val_rate * len(main_dataset))], indices[int(
+    train_val_rate * len(main_dataset)):]
 train_set, val_set = Subset(main_dataset, train_indices), Subset(main_dataset, val_indices)
 
 print(f'Train dataset length is: {len(train_set)}')
@@ -94,8 +99,9 @@ print(f'Val dataset length is: {len(val_set)}')
 dataloaders_dict = {'train': DataLoader(train_set, batch_size=batch_size, shuffle=True),
                     'val': DataLoader(val_set, batch_size=batch_size, shuffle=True)}
 print(dataloaders_dict)
-model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
-# model_ft = Net()
+
+# model_ft, input_size = initialize_model(model_name, num_classes, feature_extract, use_pretrained=True)
+model_ft = Net()
 model_ft = model_ft.to(device)
 # print(model_ft)
 
@@ -122,8 +128,8 @@ criterion = nn.BCELoss()
 model_ft.load_state_dict(torch.load('./model_weights-2.pt'))
 # Train and evaluate
 
-model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, device, num_epochs=num_epochs,
-                             is_inception=(model_name == "inception"))
+# model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, device, num_epochs=num_epochs,
+#                              is_inception=(model_name == "inception"))
 
 # model_ft.eval()
 print('$' * 40)

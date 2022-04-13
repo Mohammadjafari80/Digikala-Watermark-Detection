@@ -2,6 +2,15 @@ import time
 import copy
 import torch
 from tqdm import tqdm
+import wandb
+
+wandb.init(project="Digikala-Watermark-Detection", entity="mohammad-jafari")
+
+wandb.config = {
+    "learning_rate": 0.001,
+    "epochs": 20,
+    "batch_size": 256
+}
 
 
 def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25, is_inception=False):
@@ -26,7 +35,6 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
             running_corrects = 0
             epoch_all = 0
             epoch_loss = 0
-            epoch_true = 0
 
             # Iterate over data.
             with tqdm(enumerate(dataloaders[phase]), unit="batch", total=len(dataloaders[phase])) as tepoch:
@@ -46,15 +54,9 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
                         # Special case for inception because in training it has an auxiliary output. In train
                         #   mode we calculate the loss by summing the final output and the auxiliary output
                         #   but in testing we only consider the final output.
-                        if is_inception and phase == 'train':
-                            # From https://discuss.pytorch.org/t/how-to-optimize-inception-model-with-auxiliary-classifiers/7958
-                            outputs, aux_outputs = model(inputs)
-                            loss1 = criterion(outputs, labels)
-                            loss2 = criterion(aux_outputs, labels)
-                            loss = loss1 + 0.4 * loss2
-                        else:
-                            outputs = model(inputs).float()
-                            loss = criterion(outputs.float(), labels.unsqueeze(1).float())
+
+                        outputs = model(inputs).float()
+                        loss = criterion(outputs.float(), labels.unsqueeze(1).float())
 
                         preds = torch.round(outputs)
 
@@ -68,8 +70,12 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25,
                     epoch_all += len(outputs)
                     running_loss += loss.item() * inputs.size(0)
                     running_corrects += torch.count_nonzero(preds == labels.unsqueeze(1))
-                    tepoch.set_description(f'{phase} - Loss: {epoch_loss / (i + 1):.3e} - Acc: {running_corrects * 100. / epoch_all:.2f}%')
+                    tepoch.set_description(
+                        f'{phase} - Loss: {epoch_loss / (i + 1):.3e} - Acc: {running_corrects * 100. / epoch_all:.2f}%')
 
+                wandb.log(
+                    {f"{phase} loss": epoch_loss / (i + 1), f'{phase} Accuracy': running_corrects * 100. / epoch_all})
+                wandb.watch(model)
                 epoch_loss = running_loss / len(dataloaders[phase].dataset)
                 epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
